@@ -1,0 +1,21 @@
+# Node / Next
+node_modules/
+.next/
+out/
+dist/
+
+# Env — NUNCA commitear credenciales
+.env
+.env*.local
+
+# Terraform / OpenTofu (el state puede tener secretos)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# Varios
+.DS_Store
+*.log
+.vercel
