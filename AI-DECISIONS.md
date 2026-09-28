@@ -1,34 +1,64 @@
-﻿# AI-DECISIONS.md
+# AI Decision Log — DealVault
 
-Registro de uso de herramientas de IA en el proyecto, según requisito de la cátedra.
-
----
-
-## Formato de entrada
-
-| Campo | Descripción |
-|---|---|
-| **Fecha** | Cuándo se usó la IA |
-| **Autor** | Integrante del equipo |
-| **Issue** | Número de issue relacionado |
-| **Herramienta** | Qué IA se utilizó |
-| **Prompt / Tarea** | Qué se le pidió |
-| **Qué generó** | Output de la IA |
-| **Qué se corrigió** | Cambios manuales sobre lo generado |
+Registro de código y decisiones de diseño generados con asistencia de IA,
+con su validación y corrección humana.
 
 ---
 
-## Entradas
+## 1. Infraestructura base con OpenTofu (S3, Cognito, Budget)
 
-### 2026-09-27 — Joaco — issue #4 (arquitectura)
+**Fecha:** 27/09/2026 · **Autor:** Pedro Fiuza · **PR:** feat/infra-base
 
-| Campo | Detalle |
-|---|---|
-| **Herramienta** | Antigravity (Google DeepMind) |
-| **Prompt / Tarea** | Generar diagrama de arquitectura AWS para DealVault con todos los componentes del sistema: Next.js/Vercel, Cognito SRP, Route Handlers, Neon PostgreSQL, S3 privado (presigned URLs), pipeline IA (Lambda + Textract + Bedrock), SES, CloudWatch, GitHub Actions, OpenTofu. Exportar como PNG y drawio. |
-| **Qué generó** | Imagen PNG del diagrama con íconos de AWS, colores por capa (usuario, core, pipeline IA, soporte), leyenda. Archivo XML drawio con todos los nodos y conexiones. `docs/ARCHITECTURE.md` con tabla de decisiones por componente (qué elegimos / por qué / qué descartamos / costo estimado). |
-| **Qué se corrigió** | Se revisó que la IA esté ubicada como parte del núcleo del sistema (no como evolución futura), según indicación de la consigna. Se verificaron los costos estimados contra documentación oficial de AWS. Se ajustó el drawio XML para reflejar correctamente el flujo `s3:ObjectCreated → Lambda → Textract → Bedrock → Neon`. |
+**Problema abordado:**
+Crear la infraestructura inicial de forma reproducible (IaC) y con costo mínimo:
+almacenamiento seguro de documentos, autenticación y control de gastos.
+
+**Prompt / Herramienta:**
+Claude — pedido de infraestructura en OpenTofu para un bucket S3 privado de
+documentos, un User Pool de Cognito con roles y un budget de AWS.
+
+**Código / Arquitectura generada:**
+- Bucket S3 privado: bloqueo de acceso público, cifrado SSE-S3, versionado,
+  política que rechaza acceso sin HTTPS, CORS para presigned URLs.
+- Cognito User Pool con login por email, MFA opcional y grupos de plataforma.
+- Budget mensual de 5 USD importado desde la consola al state de OpenTofu.
+
+**Validación y corrección humana:**
+- **Budget sin filtro de créditos (error de la IA):** el código generado no
+  incluía el filtro que excluye créditos y reembolsos. Al revisar el
+  `tofu plan` se vio que iba a eliminar ese filtro del budget existente. Con los
+  créditos del free plan, el costo neto sería siempre 0 y las alertas nunca se
+  dispararían. Se agregó el `filter_expression` antes de aplicar.
+- **Roles por operación fuera de Cognito:** se descartó modelar comprador,
+  vendedor, escribano y banco como grupos de Cognito, porque una misma persona
+  puede tener roles distintos en distintas operaciones. Cognito maneja solo
+  roles de plataforma; el rol por operación y los permisos por documento van en
+  la base de datos y se validan en el backend.
+- **Costo:** se eligió SSE-S3 en lugar de SSE-KMS con clave propia para evitar
+  el costo fijo mensual de KMS en el MVP.
 
 ---
 
-> Agregar nuevas entradas arriba de esta línea, en orden cronológico descendente.
+## 2. Diagrama de arquitectura y ARCHITECTURE.md
+
+**Fecha:** 27/09/2026 · **Autor:** Joaquín Montes · **PR:** feat/architecture-diagram
+
+**Problema abordado:**
+Documentar la arquitectura cloud de DealVault para el Checkpoint 1: diagrama con
+todos los componentes y justificación de cada decisión técnica.
+
+**Prompt / Herramienta:**
+Antigravity (Google DeepMind) — generar el diagrama de arquitectura AWS con Next.js/Vercel,
+Cognito SRP, Route Handlers, Neon PostgreSQL, S3 privado (presigned URLs), pipeline de IA
+(Lambda + Textract + Bedrock), SES, CloudWatch, GitHub Actions y OpenTofu, exportado como
+PNG y drawio.
+
+**Código / Arquitectura generada:**
+- Diagrama en drawio y PNG con íconos de AWS y colores por capa.
+- `docs/ARCHITECTURE.md` con tabla de decisiones por componente (qué se eligió, por qué,
+  qué se descartó, costo estimado).
+
+**Validación y corrección humana:**
+- Se revisó que la IA esté ubicada como parte del núcleo del sistema (no como evolución
+  futura), según indica la consigna.
+- Se ajustó el flujo del pipeline para `s3:ObjectCreated → Lambda → Textract → Bedrock → Neon`.

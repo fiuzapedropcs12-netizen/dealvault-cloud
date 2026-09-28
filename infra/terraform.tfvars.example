@@ -1,0 +1,8 @@
+# Copiar como terraform.tfvars y completar. terraform.tfvars NO se commitea.
+budget_email = "tu-mail@ejemplo.com"
+
+# Sumar la URL de Vercel cuando Maxo tenga el deploy:
+allowed_origins = [
+  "http://localhost:3000",
+  # "https://dealvault.vercel.app",
+]
