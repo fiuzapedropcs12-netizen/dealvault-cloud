@@ -1,4 +1,4 @@
-﻿<mxfile host="app.diagrams.net" modified="2026-09-27" agent="antigravity" version="24.0.0">
+<mxfile host="app.diagrams.net" modified="2026-09-27" agent="antigravity" version="24.0.0">
   <diagram name="DealVault Architecture" id="dealvault-arch-v1">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -85,8 +85,8 @@
           <mxGeometry x="820" y="450" width="60" height="60" as="geometry" />
         </mxCell>
 
-        <!-- Arrow: Lambda -> Textract -->
-        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="lambda" target="textract" parent="1">
+        <!-- Arrow: Lambda -> Textract (call) -->
+        <mxCell id="e7" value="1. llama (OCR)" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="lambda" target="textract" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
@@ -95,13 +95,23 @@
           <mxGeometry x="1000" y="440" width="170" height="70" as="geometry" />
         </mxCell>
 
-        <!-- Arrow: Textract -> Bedrock -->
-        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="textract" target="bedrock" parent="1">
+        <!-- Arrow: Textract -> Lambda (returns text) -->
+        <mxCell id="e8" value="2. texto extraído" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=1;" edge="1" source="textract" target="lambda" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Arrow: Bedrock -> Neon -->
-        <mxCell id="e9" value="guarda resultados" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="bedrock" target="neon" parent="1">
+        <!-- Arrow: Lambda -> Bedrock (call with text) -->
+        <mxCell id="e8b" value="3. llama (texto)" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="lambda" target="bedrock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Bedrock -> Lambda (returns analysis) -->
+        <mxCell id="e8c" value="4. análisis" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;curved=1;" edge="1" source="bedrock" target="lambda" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Lambda -> Neon (saves results) -->
+        <mxCell id="e9" value="5. guarda en document_extractions" style="edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="lambda" target="neon" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
