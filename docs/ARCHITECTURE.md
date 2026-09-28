@@ -1,4 +1,4 @@
-﻿# DealVault — Arquitectura del Sistema
+# DealVault — Arquitectura del Sistema
 
 > **TPI — Desarrollo de Software Cloud — UTN FRLP 2026**
 
@@ -39,9 +39,9 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 
 | Aspecto | Elegido | Por qué | Descartado | Costo estimado |
 |---|---|---|---|---|
-| **Framework** | Next.js 14 (App Router) | SSR/SSG nativo, route handlers actúan como API sin servidor extra, ecosistema maduro, soporte oficial en Vercel | Remix, SvelteKit | — |
+| **Framework** | Next.js 16 (App Router) | SSR/SSG nativo, route handlers actúan como API sin servidor extra, ecosistema maduro, soporte oficial en Vercel | Remix, SvelteKit | — |
 | **Deploy** | Vercel | Free tier generoso, preview por PR, integración nativa con Next.js, deploy en segundos | AWS Amplify, EC2, ECS | USD 0 (Hobby) |
-| **Auth cliente** | Cognito SRP (cliente sin secret) | No expone credenciales en el cliente, compatible con `amazon-cognito-identity-js`, tokens JWT | OAuth social, Auth0 | USD 0 (< 50k MAU) |
+| **Auth cliente** | Cognito SRP (cliente sin secret) | No expone credenciales en el cliente, compatible con `amazon-cognito-identity-js`, tokens JWT | OAuth social, Auth0 | USD 0 (< 10k MAU) |
 
 ---
 
@@ -49,7 +49,7 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 
 | Aspecto | Elegido | Por qué | Descartado | Costo estimado |
 |---|---|---|---|---|
-| **Proveedor** | AWS Cognito | Integración nativa con S3 e IAM, free tier 50k MAU, MFA disponible | Auth0 (pricing escala rápido), Firebase Auth (lock-in Google) | USD 0 (< 50k MAU) |
+| **Proveedor** | AWS Cognito | Integración nativa con S3 e IAM, free tier 10k MAU (nuevos user pools), MFA disponible | Auth0 (pricing escala rápido), Firebase Auth (lock-in Google) | USD 0 (< 10k MAU) |
 | **Flujo** | SRP (`USER_SRP_AUTH`) | Contraseña nunca viaja en texto plano, compatible con app clients sin secret | `ALLOW_USER_PASSWORD_AUTH` (contraseña en claro) | — |
 | **Autorización de recursos** | Roles en DB por operación | Granularidad fina por recurso, auditable, no depende de grupos de Cognito | Grupos de Cognito (menos flexibles), IAM por usuario | — |
 
@@ -59,8 +59,8 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 
 | Aspecto | Elegido | Por qué | Descartado | Costo estimado |
 |---|---|---|---|---|
-| **Motor** | PostgreSQL 16 | Transacciones ACID, JSONB para metadatos IA, row-level security, `pgcrypto` | MySQL, DynamoDB (key-value no apto para relaciones complejas) | — |
-| **Proveedor** | Neon (serverless Postgres) | Escala a cero, acceso público sin VPC, DB branching para PRs, free tier 0.5 GB | RDS (requiere VPC + NAT Gateway ≈ **USD 30/mes** solo en networking), PlanetScale (solo MySQL) | USD 0 free tier vs RDS ~USD 35+/mes |
+| **Motor** | PostgreSQL 18 | Transacciones ACID, JSONB para metadatos IA, row-level security, `pgcrypto` | MySQL, DynamoDB (key-value no apto para relaciones complejas) | — |
+| **Proveedor** | Neon (serverless Postgres) | Escala a cero, acceso público sin VPC, DB branching para PRs, free tier 0.5 GB; conexión en `db/.env` | RDS (requiere VPC + NAT Gateway ≈ **USD 30/mes** solo en networking), PlanetScale (solo MySQL) | USD 0 free tier vs RDS ~USD 35+/mes |
 | **Connection pooling** | Neon Pooler (PgBouncer managed) | Lambdas abren muchas conexiones cortas; el pooler evita `too many connections` | RDS Proxy (USD 0.015/hora ≈ USD 11/mes extra) | USD 0 (incluido en Neon) |
 
 ---
@@ -81,9 +81,9 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 | Aspecto | Elegido | Por qué | Descartado | Costo estimado |
 |---|---|---|---|---|
 | **Trigger** | Evento `s3:ObjectCreated:*` → Lambda | Asíncrono, no bloquea la carga, serverless, sin polling | SQS + worker EC2 (infraestructura extra innecesaria) | — |
-| **OCR** | AWS Textract | Extrae texto, tablas y formularios de PDFs/imágenes, integración directa vía SDK, apto para docs legales complejos | Google Vision API (datos fuera de AWS), Tesseract self-hosted (baja precisión en PDFs escaneados) | USD 0.0015/pág (primeras 1k pág/mes gratis) |
+| **OCR** | AWS Textract | Extrae texto, tablas y formularios de PDFs/imágenes, integración directa vía SDK, apto para docs legales complejos | Google Vision API (datos fuera de AWS), Tesseract self-hosted (baja precisión en PDFs escaneados) | USD 0.0015/pág (sin free tier — cuenta con créditos, no plan de 12 meses) |
 | **LLM / Análisis** | Amazon Bedrock (Claude 3 Haiku/Sonnet) | API unificada, sin gestión de GPU, datos no salen de AWS (compliance), acceso a Claude con baja latencia | OpenAI API (datos salen de AWS), SageMaker (endpoints de costo fijo) | Haiku: ~USD 0.00025/1k input tokens |
-| **Persistencia IA** | Tabla `ai_analysis` en Neon | Centraliza en un motor, permite joins con deals/documentos, historial auditable | DynamoDB separado (complejidad extra, joins imposibles) | USD 0 (Neon free tier) |
+| **Persistencia IA** | Tabla `document_extractions` en Neon | Centraliza en un motor, permite joins con deals/documentos, historial auditable | DynamoDB separado (complejidad extra, joins imposibles) | USD 0 (Neon free tier) |
 
 ---
 
@@ -91,7 +91,9 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 
 | Aspecto | Elegido | Por qué | Descartado | Costo estimado |
 |---|---|---|---|---|
-| **Servicio** | AWS SES | Stack AWS unificado, alta deliverability, primeras 62k emails/mes gratis desde Lambda, soporta HTML templates | SendGrid (USD 19.95/mes), SNS email (no soporta HTML) | USD 0 (< 62k emails/mes desde Lambda) |
+| **Servicio** | AWS SES | Stack AWS unificado, alta deliverability, soporta HTML templates | SendGrid (USD 19.95/mes), SNS email (no soporta HTML) | USD 0.10/1k emails (sin free tier de 62k — ese beneficio era exclusivo del sandbox desde EC2/Lambda en cuentas elegibles; nuestra cuenta usa créditos) |
+
+> **Nota:** Lambda y SES aún no están desplegados en `infra/`; la integración es parte del roadmap.
 
 ---
 
@@ -109,7 +111,7 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 | Aspecto | Elegido | Por qué | Descartado | Costo estimado |
 |---|---|---|---|---|
 | **Tool** | OpenTofu | Fork open-source de Terraform (MPL-2.0), compatible con todos los providers AWS, sin lock-in de HashiCorp | Terraform (BSL desde v1.6), CDK (requiere TypeScript para HCL equivalente), CloudFormation (verboso, no portable) | USD 0 |
-| **State backend** | S3 + DynamoDB lock | Estándar para equipos, previene estados corruptos por escrituras concurrentes | Local state (no apto para trabajo en equipo) | USD ~0 (volúmenes mínimos) |
+| **State backend** | Local (actual) → S3 + `use_lockfile` (pendiente) | Hoy el state es local para agilizar el arranque; la migración a S3 con `use_lockfile` está pendiente. DynamoDB ya no es necesario con OpenTofu ≥ 1.10. | State en repositorio (inseguro, no escalable) | USD ~0 (volúmenes mínimos) |
 
 ---
 
@@ -128,9 +130,9 @@ CloudWatch ─────► Logs, métricas y alarmas de toda la infra AWS
 ```
 dealvault-cloud/
 ├── apps/
-│   └── web/              # Next.js 14 (Maxo)
-├── infra/                # OpenTofu — S3, Cognito, Lambda, SES (Pedro)
-├── db/                   # Schema PostgreSQL + migraciones (Pedro)
+│   └── web/              # Next.js 16 (Maxo)
+├── infra/                # OpenTofu — S3, Cognito (Pedro) [Lambda y SES: pendiente]
+├── db/                   # Schema PostgreSQL + migraciones (Pedro) · conexión en db/.env
 ├── docs/
 │   ├── ARCHITECTURE.md   # Este archivo (Joaco — issue #4)
 │   └── architecture/
@@ -145,12 +147,17 @@ dealvault-cloud/
 
 ---
 
-## Configuración AWS (us-east-1)
+## Servicios externos y límites
 
-| Recurso | Identificador |
-|---|---|
-| Region | `us-east-1` |
-| Cognito User Pool ID | `us-east-1_FnWMMtTEX` |
-| Cognito Client ID | `3kbhjn873u8ovnrs0v8br2fm0q` |
-| S3 Bucket | `dealvault-docs-*` (privado, SSE-S3) |
-| Postgres | Neon (ver `.env.local`) |
+> Los servicios marcados como **[Externo]** corren fuera del límite de AWS Cloud / us-east-1.
+
+| Servicio | Tipo | Nota |
+|---|---|---|
+| Next.js / Vercel | **[Externo]** | Deploy automático vía GitHub Actions |
+| Neon PostgreSQL | **[Externo]** | Serverless Postgres; conexión en `db/.env` |
+| GitHub Actions | **[Externo]** | CI/CD: lint, build, `tofu validate`; dispara deploy en Vercel |
+| OpenTofu | Tooling local/CI | Provisiona S3, Cognito en `us-east-1`; state local (pendiente migrar a S3) |
+| CloudWatch | AWS (us-east-1) | Recibe logs y métricas de Lambda, S3 eventos, Cognito y SES automáticamente |
+| S3 Bucket | AWS (us-east-1) | `dealvault-dev-docs-*` (privado, SSE-S3) |
+
+> **Seguridad:** Los IDs de Cognito (User Pool y Client) se manejan como variables de entorno y no se documentan en este archivo. El repositorio es público.
