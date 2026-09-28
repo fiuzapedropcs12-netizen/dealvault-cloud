@@ -39,36 +39,28 @@ documentos, un User Pool de Cognito con roles y un budget de AWS.
 
 ---
 
-## 2. Esquema de base de datos y migraciones (Neon + dbmate)
+## 2. Diagrama de arquitectura y ARCHITECTURE.md
 
-**Fecha:** 27/09/2026 · **Autor:** Pedro Fiuza · **PR:** feat/db-schema
+**Fecha:** 27/09/2026 · **Autor:** Joaquín Montes · **PR:** feat/architecture-diagram
 
 **Problema abordado:**
-Modelar operaciones inmobiliarias con múltiples partes, permisos granulares por documento,
-versionado, firma electrónica y auditoría inalterable, con migraciones reproducibles.
+Documentar la arquitectura cloud de DealVault para el Checkpoint 1: diagrama con
+todos los componentes y justificación de cada decisión técnica.
 
 **Prompt / Herramienta:**
-Claude — pedido de esquema PostgreSQL para DealVault en migraciones SQL para dbmate,
-consistente con la arquitectura (Cognito para identidad, S3 para archivos, IA para extracción).
+Antigravity (Google DeepMind) — generar el diagrama de arquitectura AWS con Next.js/Vercel,
+Cognito SRP, Route Handlers, Neon PostgreSQL, S3 privado (presigned URLs), pipeline de IA
+(Lambda + Textract + Bedrock), SES, CloudWatch, GitHub Actions y OpenTofu, exportado como
+PNG y drawio.
 
 **Código / Arquitectura generada:**
-- 3 migraciones: núcleo (organizaciones, usuarios, operaciones, partes), documentos
-  (versiones con SHA-256, permisos, firmas) y auditoría + resultados de IA.
-- Trigger que hace `audit_events` append-only (bloquea UPDATE, DELETE y TRUNCATE).
-- README con el flujo de migraciones.
+- Diagrama en drawio y PNG con íconos de AWS y colores por capa.
+- `docs/ARCHITECTURE.md` con tabla de decisiones por componente (qué se eligió, por qué,
+  qué se descartó, costo estimado).
 
 **Validación y corrección humana:**
-- **Comando de dbmate incorrecto (error de la IA):** el README indicaba correr dbmate desde
-  `db/` sin especificar la carpeta, y dbmate busca `./db/migrations` por defecto. Se detectó al
-  ejecutarlo y se corrigió con `-d migrations`.
-- **Parámetro `channel_binding` de Neon:** la connection string de Neon puede incluirlo y el
-  driver de dbmate no lo soporta; se documentó en el README.
-- **Hueco detectado en la code review (Maxo):** el esquema no definía quién crea la fila en
-  `users` al primer login. Se decidió provisioning just-in-time en el backend (upsert por
-  `cognito_sub`) y vincular invitaciones pendientes solo si el token trae `email_verified: true`,
-  para que nadie se apropie de invitaciones registrándose con un mail ajeno. Queda en una issue aparte.
-- **Vincular no es aceptar:** la propuesta inicial del provisioning marcaba `accepted_at` al
-  vincular la invitación; se corrigió para que solo complete `user_id`, porque aceptar es una
-  acción explícita del usuario.
-- Se verificó en un Postgres local que las migraciones suben, bajan limpias y que el trigger
-  rechaza UPDATE, DELETE y TRUNCATE sobre `audit_events`.
+- Se revisó que la IA esté ubicada como parte del núcleo del sistema (no como evolución
+  futura), según indica la consigna.
+- **Flujo del pipeline (error de la IA):** el diagrama generado tenía flechas de Textract a
+  Bedrock y de Bedrock a Neon, sin pasar por la Lambda, que es la que orquesta. Se reemplazaron
+  para
