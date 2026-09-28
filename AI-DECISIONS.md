@@ -63,15 +63,4 @@ PNG y drawio.
   futura), según indica la consigna.
 - **Flujo del pipeline (error de la IA):** el diagrama generado tenía flechas de Textract a
   Bedrock y de Bedrock a Neon, sin pasar por la Lambda, que es la que orquesta. Se reemplazaron
-  para reflejar el flujo real: evento de S3 → Lambda → llamada a Textract → Lambda recibe el
-  texto → llamada a Bedrock → Lambda recibe el análisis → INSERT en `document_extractions` (Neon).
-- **Datos técnicos que no coincidían con lo construido:** se corrigieron las versiones
-  (Next.js 16, Postgres 18), el nombre de la tabla (`document_extractions`), el estado del
-  backend de OpenTofu (local, migración a S3 pendiente) y el nombre del bucket
-  (`dealvault-dev-docs-*`).
-- **Costos desactualizados:** los costos generados no se habían validado contra la
-  documentación oficial; los errores se detectaron en la revisión del PR #10. Se corrigieron:
-  Cognito da 10.000 MAU gratis para user pools nuevos; Textract no tiene free tier permanente
-  en cuentas con créditos; el beneficio de 62k emails de SES desde Lambda/EC2 fue discontinuado.
-- **Datos sensibles:** se eliminaron del documento los IDs de Cognito, dado que el repositorio
-  es público; la sección de configuración se reemplazó por una tabla de servicios externos y límites.
+  para
