@@ -1,0 +1,136 @@
+﻿<mxfile host="app.diagrams.net" modified="2026-09-27" agent="antigravity" version="24.0.0">
+  <diagram name="DealVault Architecture" id="dealvault-arch-v1">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="DealVault — Arquitectura Cloud" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="700" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Usuario -->
+        <mxCell id="user" value="Usuario" style="shape=mxgraph.aws4.user;fillColor=#232F3E;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Next.js / Vercel -->
+        <mxCell id="nextjs" value="Next.js / Vercel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5B21B6;strokeColor=#4C1D95;fontColor=#FFFFFF;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="130" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: User -> Next.js -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="user" target="nextjs" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Cognito -->
+        <mxCell id="cognito" value="Amazon Cognito&#xa;(Auth SRP)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cognito;fillColor=#BF0816;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="200" y="260" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Next.js -> Cognito -->
+        <mxCell id="e2" value="login" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="nextjs" target="cognito" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Route Handlers / API -->
+        <mxCell id="api" value="Route Handlers / API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="130" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Next.js -> API -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="nextjs" target="api" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Neon PostgreSQL -->
+        <mxCell id="neon" value="Neon PostgreSQL&#xa;deals · partes · permisos&#xa;auditoría · IA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00A550;strokeColor=#007A3D;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="270" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: API -> Neon -->
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="api" target="neon" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- S3 -->
+        <mxCell id="s3" value="Amazon S3&#xa;Docs privados&#xa;SSE-S3 · presigned URLs" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;fillColor=#277116;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="720" y="120" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: API -> S3 -->
+        <mxCell id="e5" value="presigned URL" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="api" target="s3" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AI Pipeline box -->
+        <mxCell id="ai-box" value="Pipeline IA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F0A500;fontSize=13;fontStyle=3;verticalAlign=top;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="600" y="400" width="700" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Lambda -->
+        <mxCell id="lambda" value="AWS Lambda&#xa;OCR trigger" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="640" y="450" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: S3 -> Lambda -->
+        <mxCell id="e6" value="s3:ObjectCreated" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="s3" target="lambda" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Textract -->
+        <mxCell id="textract" value="Amazon Textract&#xa;OCR" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.textract;fillColor=#01A88D;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="820" y="450" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Lambda -> Textract -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="lambda" target="textract" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Bedrock -->
+        <mxCell id="bedrock" value="Amazon Bedrock&#xa;Claude · análisis +&#xa;inconsistencias" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9900;strokeColor=#CC7A00;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="440" width="170" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Textract -> Bedrock -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="textract" target="bedrock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Bedrock -> Neon -->
+        <mxCell id="e9" value="guarda resultados" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="bedrock" target="neon" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SES -->
+        <mxCell id="ses" value="Amazon SES&#xa;Notificaciones" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ses;fillColor=#E7157B;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="120" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: API -> SES -->
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="api" target="ses" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CloudWatch -->
+        <mxCell id="cw" value="CloudWatch&#xa;Logs · Métricas · Alarmas" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="270" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- GitHub Actions -->
+        <mxCell id="ghactions" value="GitHub Actions&#xa;CI/CD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#24292F;strokeColor=#111827;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="420" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- OpenTofu -->
+        <mxCell id="tofu" value="OpenTofu&#xa;IaC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#8B5CF6;strokeColor=#6D28D9;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="500" width="130" height="50" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
