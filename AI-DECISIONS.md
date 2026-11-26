@@ -39,7 +39,43 @@ documentos, un User Pool de Cognito con roles y un budget de AWS.
 
 ---
 
-## 2. Diagrama de arquitectura y ARCHITECTURE.md
+## 2. Esquema de base de datos y migraciones (Neon + dbmate)
+
+**Fecha:** 27/09/2026 · **Autor:** Pedro Fiuza · **PR:** feat/db-schema
+
+**Problema abordado:**
+Modelar operaciones inmobiliarias con múltiples partes, permisos granulares por documento,
+versionado, firma electrónica y auditoría inalterable, con migraciones reproducibles.
+
+**Prompt / Herramienta:**
+Claude — pedido de esquema PostgreSQL para DealVault en migraciones SQL para dbmate,
+consistente con la arquitectura (Cognito para identidad, S3 para archivos, IA para extracción).
+
+**Código / Arquitectura generada:**
+- 3 migraciones: núcleo (organizaciones, usuarios, operaciones, partes), documentos
+  (versiones con SHA-256, permisos, firmas) y auditoría + resultados de IA.
+- Trigger que hace `audit_events` append-only (bloquea UPDATE, DELETE y TRUNCATE).
+- README con el flujo de migraciones.
+
+**Validación y corrección humana:**
+- **Comando de dbmate incorrecto (error de la IA):** el README indicaba correr dbmate desde
+  `db/` sin especificar la carpeta, y dbmate busca `./db/migrations` por defecto. Se detectó al
+  ejecutarlo y se corrigió con `-d migrations`.
+- **Parámetro `channel_binding` de Neon:** la connection string de Neon puede incluirlo y el
+  driver de dbmate no lo soporta; se documentó en el README.
+- **Hueco detectado en la code review (Maxo):** el esquema no definía quién crea la fila en
+  `users` al primer login. Se decidió provisioning just-in-time en el backend (upsert por
+  `cognito_sub`) y vincular invitaciones pendientes solo si el token trae `email_verified: true`,
+  para que nadie se apropie de invitaciones registrándose con un mail ajeno. Queda en una issue aparte.
+- **Vincular no es aceptar:** la propuesta inicial del provisioning marcaba `accepted_at` al
+  vincular la invitación; se corrigió para que solo complete `user_id`, porque aceptar es una
+  acción explícita del usuario.
+- Se verificó en un Postgres local que las migraciones suben, bajan limpias y que el trigger
+  rechaza UPDATE, DELETE y TRUNCATE sobre `audit_events`.
+
+---
+
+## 3. Diagrama de arquitectura y ARCHITECTURE.md
 
 **Fecha:** 27/09/2026 · **Autor:** Joaquín Montes · **PR:** feat/architecture-diagram
 
@@ -63,4 +99,15 @@ PNG y drawio.
   futura), según indica la consigna.
 - **Flujo del pipeline (error de la IA):** el diagrama generado tenía flechas de Textract a
   Bedrock y de Bedrock a Neon, sin pasar por la Lambda, que es la que orquesta. Se reemplazaron
-  para
+  para reflejar el flujo real: evento de S3 → Lambda → llamada a Textract → Lambda recibe el
+  texto → llamada a Bedrock → Lambda recibe el análisis → INSERT en `document_extractions` (Neon).
+- **Datos técnicos que no coincidían con lo construido:** se corrigieron las versiones
+  (Next.js 16, Postgres 18), el nombre de la tabla (`document_extractions`), el estado del
+  backend de OpenTofu (local, migración a S3 pendiente) y el nombre del bucket
+  (`dealvault-dev-docs-*`).
+- **Costos desactualizados:** los costos generados no se habían validado contra la
+  documentación oficial; los errores se detectaron en la revisión del PR #10. Se corrigieron:
+  Cognito da 10.000 MAU gratis para user pools nuevos; Textract no tiene free tier permanente
+  en cuentas con créditos; el beneficio de 62k emails de SES desde Lambda/EC2 fue discontinuado.
+- **Datos sensibles:** se eliminaron del documento los IDs de Cognito, dado que el repositorio
+  es público; la sección de configuración se reemplazó por una tabla de servicios externos y límites.
